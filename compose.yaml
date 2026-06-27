@@ -1,13 +1,13 @@
 services:
   db:
-    image: postgres:17
+    image: postgres:18
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-banalities}
       POSTGRES_USER: ${POSTGRES_USER:-banalities}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db-init:/docker-entrypoint-initdb.d:ro   # creates the keycloak database on first init
+      - ./db-migrations:/docker-entrypoint-initdb.d:ro   # creates the keycloak database on first init
     ports:
       - "5432:5432"   # local dev access; drop on the VPS if only the server talks to it
     healthcheck:

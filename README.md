@@ -93,7 +93,7 @@ host-published; only Caddy's 80/443 are.
 ## Auth (Keycloak + Ktor)
 
 Keycloak runs in compose against the same Postgres (its own `keycloak` database, created by
-`db-init/` on first init) and is reachable at `KEYCLOAK_DOMAIN`. Set `KEYCLOAK_ADMIN_PASSWORD`
+`db-migrations/` on first init) and is reachable at `KEYCLOAK_DOMAIN`. Set `KEYCLOAK_ADMIN_PASSWORD`
 in `.env` before first boot.
 
 The server validates Keycloak-issued JWTs itself — Ktor's `Authentication` plugin fetches the
