@@ -44,11 +44,11 @@ services:
       KC_DB_URL: jdbc:postgresql://db:5432/keycloak
       KC_DB_USERNAME: ${POSTGRES_USER:-banalities}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
-      KC_HOSTNAME: https://${KEYCLOAK_DOMAIN:?set KEYCLOAK_DOMAIN in .env}
+      KC_HOSTNAME: https://${KEYCLOAK_DOMAIN:-localhost}
       KC_HTTP_ENABLED: "true"          # Caddy terminates TLS; Keycloak speaks plain HTTP internally
       KC_PROXY_HEADERS: xforwarded     # trust X-Forwarded-* from Caddy
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD in .env}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
     expose:
       - "8080"
     depends_on:

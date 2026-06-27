@@ -19,8 +19,7 @@ cleanup() {
   [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
   pkill -f 'com.banalities.server' 2>/dev/null || true   # ponytail: kills the gradle-spawned JVM by main class
   docker rm -f kc-test >/dev/null 2>&1 || true
-  SERVER_DOMAIN=x KEYCLOAK_DOMAIN=y KEYCLOAK_ADMIN_PASSWORD=z POSTGRES_PASSWORD=banalities \
-    docker compose down -v >/dev/null 2>&1 || true
+  docker compose down -v >/dev/null 2>&1 || true
   rm -rf "$IMPORT_DIR"
 }
 trap cleanup EXIT
@@ -32,8 +31,7 @@ check() { # desc expected actual
 code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 
 echo "=== 1. Postgres + Keycloak ==="
-SERVER_DOMAIN=x KEYCLOAK_DOMAIN=y KEYCLOAK_ADMIN_PASSWORD=z POSTGRES_PASSWORD=banalities \
-  docker compose up -d --wait db >/dev/null
+docker compose up -d --wait db >/dev/null
 
 docker rm -f kc-test >/dev/null 2>&1 || true
 cp tests/e2e/test-realm.json "$IMPORT_DIR/banalities-realm.json"
