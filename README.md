@@ -83,7 +83,50 @@ docker compose up --build
 The server image is a prebuilt-jar `Dockerfile` (`banalities-server/Dockerfile`) — the jar
 is built on the host so Docker doesn't need the KMP/Android toolchain. **Rebuild the jar
 before `docker compose build`.** For a VPS, copy `.env.example` to `.env` and set a real
-`POSTGRES_PASSWORD` (compose reads `.env`; `.env` is gitignored).
+`POSTGRES_PASSWORD` and `SERVER_DOMAIN` (compose reads `.env`; `.env` is gitignored).
+
+On the VPS, Caddy fronts both the server and Keycloak: it terminates TLS (automatic Let's
+Encrypt for `SERVER_DOMAIN` and `KEYCLOAK_DOMAIN`, both of which must resolve to the host) and
+reverse-proxies over the internal network — WebSockets included. Neither backend is
+host-published; only Caddy's 80/443 are.
+
+## Auth (Keycloak + Ktor)
+
+Keycloak runs in compose against the same Postgres (its own `keycloak` database, created by
+`db-init/` on first init) and is reachable at `KEYCLOAK_DOMAIN`. Set `KEYCLOAK_ADMIN_PASSWORD`
+in `.env` before first boot.
+
+The server validates Keycloak-issued JWTs itself — Ktor's `Authentication` plugin fetches the
+realm's public keys (JWKS) and checks issuer + audience on every request, including the
+realtime WebSocket's upgrade handshake (`authenticate("keycloak") { … }`). No shared secret;
+Caddy does **not** do auth.
+
+### Realm seed
+
+The `banalities` realm is seeded automatically from `keycloak/import/banalities-realm.json`
+on first boot (`start --import-realm`; skipped once the realm exists, so console edits stick).
+It sets up:
+- **self-registration** (`registrationAllowed`) + login/reset by email,
+- client **`banalities-server`** — the bearer-only resource server the game validates against,
+- client **`banalities-client`** — public + PKCE front-end, with an **audience mapper** that puts
+  `banalities-server` in the token's `aud` (without this the server 401s every token),
+- **Discord** as an identity provider (`providerId: discord`).
+
+### Discord login (manual prerequisites)
+
+Discord is **not** a built-in Keycloak provider — `keycloak/Dockerfile` adds the community
+`keycloak-discord` SPI. Two things can't be automated:
+
+1. **Create a Discord application** at <https://discord.com/developers/applications> → OAuth2.
+   Add this redirect URI: `https://KEYCLOAK_DOMAIN/realms/banalities/broker/discord/endpoint`.
+   Copy its Client ID + Client Secret.
+2. In the Keycloak console → realm `banalities` → Identity providers → **discord**, paste the
+   Client ID/Secret (the seed ships `SET_IN_CONSOLE` placeholders). Set once; they persist.
+
+Also set `banalities-client`'s redirect URIs / web origins to your real front-end origin (the
+seed ships `https://game.example.com/*`).
+
+Clients then send `Authorization: Bearer <token>` (or the token on the WS connect URL).
 
 ## Gotchas
 

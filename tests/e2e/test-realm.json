@@ -1,0 +1,25 @@
+{
+  "realm": "banalities",
+  "enabled": true,
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "clients": [
+    { "clientId": "banalities-server", "enabled": true, "bearerOnly": true, "protocol": "openid-connect" },
+    {
+      "clientId": "banalities-client", "enabled": true, "publicClient": true,
+      "standardFlowEnabled": true, "directAccessGrantsEnabled": true, "protocol": "openid-connect",
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "redirectUris": ["http://localhost/*"], "webOrigins": ["+"],
+      "protocolMappers": [{
+        "name": "banalities-server-audience", "protocol": "openid-connect",
+        "protocolMapper": "oidc-audience-mapper",
+        "config": { "included.client.audience": "banalities-server", "access.token.claim": "true", "id.token.claim": "false" }
+      }]
+    }
+  ],
+  "users": [{
+    "username": "tester", "enabled": true, "email": "tester@example.com", "emailVerified": true,
+    "firstName": "Test", "lastName": "Er", "requiredActions": [],
+    "credentials": [{ "type": "password", "value": "test", "temporary": false }]
+  }]
+}

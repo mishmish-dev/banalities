@@ -1,0 +1,54 @@
+{
+  "realm": "banalities",
+  "enabled": true,
+
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "registrationEmailAsUsername": false,
+  "verifyEmail": false,
+  "resetPasswordAllowed": true,
+
+  "clients": [
+    {
+      "clientId": "banalities-server",
+      "enabled": true,
+      "bearerOnly": true,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "banalities-client",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "protocol": "openid-connect",
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "redirectUris": ["https://game.example.com/*"],
+      "webOrigins": ["+"],
+      "protocolMappers": [
+        {
+          "name": "banalities-server-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "banalities-server",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+
+  "identityProviders": [
+    {
+      "alias": "discord",
+      "providerId": "discord",
+      "enabled": true,
+      "config": {
+        "clientId": "SET_IN_CONSOLE",
+        "clientSecret": "SET_IN_CONSOLE",
+        "defaultScope": "identify email"
+      }
+    }
+  ]
+}

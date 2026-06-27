@@ -1,0 +1,9 @@
+{$SERVER_DOMAIN} {
+	# Automatic Let's Encrypt TLS. reverse_proxy upgrades WebSockets transparently,
+	# so the realtime game socket is TLS-terminated here and plain HTTP inside the network.
+	reverse_proxy server:8080
+}
+
+{$KEYCLOAK_DOMAIN} {
+	reverse_proxy keycloak:8080
+}

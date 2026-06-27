@@ -1,0 +1,30 @@
+name: e2e
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest   # ships Docker, jq, python3; nix dev shell skips the Xcode bits on Linux
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('gradle/libs.versions.toml', '**/*.gradle.kts', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      # Pre-warm so test.sh's server-startup wait isn't racing a cold KMP build.
+      - name: Build server
+        run: nix develop --command ./gradlew :banalities-server:classes
+
+      - name: Run e2e auth test
+        run: ./tests/e2e/test.sh

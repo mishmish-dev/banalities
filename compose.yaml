@@ -7,6 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro   # creates the keycloak database on first init
     ports:
       - "5432:5432"   # local dev access; drop on the VPS if only the server talks to it
     healthcheck:
@@ -23,11 +24,55 @@ services:
       JDBC_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-banalities}
       DB_USER: ${POSTGRES_USER:-banalities}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
-    ports:
-      - "8080:8080"
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-https://auth.example.com/realms/banalities}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-banalities-server}
+    expose:
+      - "8080"   # internal only; Caddy fronts it. Add a host port mapping for local-only debugging.
     depends_on:
       db:
         condition: service_healthy
 
+  keycloak:
+    build:
+      context: ./keycloak          # adds the Discord SPI to the official image
+    command: ["start", "--import-realm"]   # seeds the banalities realm on first boot; skipped once it exists
+    restart: unless-stopped
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import:ro
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-banalities}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
+      KC_HOSTNAME: https://${KEYCLOAK_DOMAIN:?set KEYCLOAK_DOMAIN in .env}
+      KC_HTTP_ENABLED: "true"          # Caddy terminates TLS; Keycloak speaks plain HTTP internally
+      KC_PROXY_HEADERS: xforwarded     # trust X-Forwarded-* from Caddy
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD in .env}
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SERVER_DOMAIN: ${SERVER_DOMAIN:?set SERVER_DOMAIN in .env}
+      KEYCLOAK_DOMAIN: ${KEYCLOAK_DOMAIN:?set KEYCLOAK_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data       # persists issued certs across restarts — without it you hit Let's Encrypt rate limits
+      - caddy_config:/config
+    depends_on:
+      - server
+      - keycloak
+
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:
