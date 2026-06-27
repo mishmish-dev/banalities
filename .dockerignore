@@ -1,0 +1,3 @@
+# Only the prebuilt server jar needs to reach the Docker build context.
+*
+!banalities-server/build/libs/*-all.jar

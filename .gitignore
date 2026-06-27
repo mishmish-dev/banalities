@@ -1,0 +1,11 @@
+.gradle/
+build/
+local.properties
+.kotlin/
+.idea/
+*.iml
+xcuserdata/
+.DS_Store
+.env
+# iOS Xcode project is generated from project.yml by XcodeGen
+banalities-ios/iosApp.xcodeproj/

@@ -1,0 +1,34 @@
+name: iosApp
+options:
+  bundleIdPrefix: com.banalities
+  deploymentTarget:
+    iOS: "15.0"
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.banalities.ios
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        # We only ship iosSimulatorArm64 (Compose MP dropped the Intel x86_64 simulator).
+        "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
+        # Link the BanalitiesUI framework that Gradle builds from :banalities-ui.
+        FRAMEWORK_SEARCH_PATHS:
+          - $(inherited)
+          - $(SRCROOT)/../banalities-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+        OTHER_LDFLAGS:
+          - $(inherited)
+          - -framework
+          - BanalitiesUI
+    preBuildScripts:
+      - name: Build BanalitiesUI Kotlin framework
+        basedOnDependencyAnalysis: false
+        script: |
+          cd "$SRCROOT/.."
+          ./gradlew :banalities-ui:embedAndSignAppleFrameworkForXcode
+    scheme:
+      testTargets: []
