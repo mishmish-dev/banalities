@@ -13,14 +13,14 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      # Cache /nix/store so the dev-shell closure (jdk, gradle, Android SDK) isn't re-fetched
+      # every run. Keyed on flake.lock — only changes when the toolchain pins move.
+      - uses: nix-community/cache-nix-action@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('gradle/libs.versions.toml', '**/*.gradle.kts', 'gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+
+      - uses: gradle/actions/setup-gradle@v4
 
       # Pre-warm so test.sh's server-startup wait isn't racing a cold KMP build.
       - name: Build server

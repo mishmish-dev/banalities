@@ -33,10 +33,11 @@ code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 
 echo "=== 1. Postgres + Keycloak ==="
 SERVER_DOMAIN=x KEYCLOAK_DOMAIN=y KEYCLOAK_ADMIN_PASSWORD=z POSTGRES_PASSWORD=banalities \
-  docker compose up -d db >/dev/null
+  docker compose up -d --wait db >/dev/null
 
 docker rm -f kc-test >/dev/null 2>&1 || true
 cp tests/e2e/test-realm.json "$IMPORT_DIR/banalities-realm.json"
+chmod 755 "$IMPORT_DIR"   # ponytail: mktemp -d is 0700; keycloak's uid 1000 must traverse it
 docker run -d --name kc-test -p 8081:8080 \
   -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
   -v "$IMPORT_DIR":/opt/keycloak/data/import:ro \
@@ -46,13 +47,12 @@ echo "waiting for keycloak realm..."
 for _ in $(seq 1 60); do
   [ "$(code "$KC/realms/banalities")" = 200 ] && break; sleep 2
 done
+if [ "$(code "$KC/realms/banalities")" != 200 ]; then
+  echo "--- kc-test logs ---"; docker logs kc-test 2>&1 | tail -50   # ponytail: only on failure
+fi
 check "keycloak realm reachable" 200 "$(code "$KC/realms/banalities")"
 
-echo "=== 2. messages table (no migration runner yet) ==="
-docker exec -i banalities-db-1 psql -U banalities -d banalities \
-  < banalities-server/src/main/resources/db/migration/V1__messages.sql >/dev/null
-
-echo "=== 3. server (pointed at local keycloak) ==="
+echo "=== 2. server (pointed at local keycloak) ==="
 KEYCLOAK_ISSUER="$KC/realms/banalities" KEYCLOAK_AUDIENCE=banalities-server \
   nix develop --command ./gradlew :banalities-server:run --console=plain >/tmp/e2e-server.log 2>&1 &
 SERVER_PID=$!
@@ -60,9 +60,12 @@ echo "waiting for server..."
 for _ in $(seq 1 90); do
   [ "$(code "$SRV/")" = 200 ] && break; sleep 2
 done
+if [ "$(code "$SRV/")" != 200 ]; then
+  echo "--- server logs ---"; cat /tmp/e2e-server.log | tail -80   # ponytail: only on failure
+fi
 check "server up" 200 "$(code "$SRV/")"
 
-echo "=== 4. token + assertions ==="
+echo "=== 3. token + assertions ==="
 TOKEN=$(curl -s -X POST "$KC/realms/banalities/protocol/openid-connect/token" \
   -d grant_type=password -d client_id=banalities-client -d username=tester -d password=test \
   | jq -r .access_token)

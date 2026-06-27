@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -59,6 +60,7 @@ suspend fun disconnectUser(subject: String, reason: String = "disconnected by se
 
 fun Application.module() {
     val db = Database.connect(dataSource())
+    transaction(db) { SchemaUtils.create(Messages) }  // ponytail: idempotent; swap for a real migration runner when schema evolves
     installAuth()
     install(WebSockets)
     routing {
