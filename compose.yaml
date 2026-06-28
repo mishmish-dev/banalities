@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
     volumes:
       - pgdata:/var/lib/postgresql
-      - ./db-migrations:/docker-entrypoint-initdb.d:ro   # creates the keycloak database on first init
+      - ./db/pre-migration:/docker-entrypoint-initdb.d:ro   # creates the keycloak database on first init
     ports:
       - "5432:5432"   # local dev access; drop on the VPS if only the server talks to it
     healthcheck:
@@ -15,6 +15,21 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  migrate:
+    image: flyway/flyway:12.9.0
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-banalities}
+      FLYWAY_USER: ${POSTGRES_USER:-banalities}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
+      FLYWAY_LOCATIONS: filesystem:/migrations
+    volumes:
+      - ./db/migration:/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["migrate"]
 
   server:
     build:

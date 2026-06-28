@@ -25,6 +25,9 @@
             includeNDK = false;
           };
           sdk = "${android.androidsdk}/libexec/android-sdk";
+          devCmd = pkgs.writeShellScriptBin "dev" ''
+            exec "$(git rev-parse --show-toplevel)/dev-utils.sh" "$@"
+          '';
         in {
           # mkShellNoCC: no Nix C toolchain — its cc/ld wrapper otherwise mangles Xcode's
           # Swift linker flags. Kotlin/Gradle/Xcode supply their own toolchains.
@@ -34,6 +37,8 @@
               kotlin
               gradle
               android.androidsdk
+              postgresql  # pg_dump for dev dump-schema
+              devCmd
             ] ++ lib.optionals stdenv.isDarwin [
               xcodegen  # generates the iOS Xcode project from banalities-ios/project.yml
             ];

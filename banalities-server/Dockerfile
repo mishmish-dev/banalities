@@ -4,5 +4,6 @@
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY banalities-server/build/libs/*-all.jar app.jar
+COPY db/migration db/migration
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

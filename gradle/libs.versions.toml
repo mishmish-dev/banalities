@@ -8,6 +8,7 @@ logback = "1.5.18"
 postgresql = "42.7.5"
 hikari = "6.2.1"
 exposed = "1.3.0"
+flyway = "12.9.0"
 mosaic = "0.18.0"
 android-compileSdk = "35"
 android-minSdk = "24"
@@ -26,6 +27,8 @@ hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 mosaic-runtime = { module = "com.jakewharton.mosaic:mosaic-runtime", version.ref = "mosaic" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 
 [plugins]
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

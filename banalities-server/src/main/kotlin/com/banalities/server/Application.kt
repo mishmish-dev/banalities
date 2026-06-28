@@ -28,9 +28,9 @@ import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
+import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.jdbc.Database
-import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -59,8 +59,12 @@ suspend fun disconnectUser(subject: String, reason: String = "disconnected by se
 }
 
 fun Application.module() {
-    val db = Database.connect(dataSource())
-    transaction(db) { SchemaUtils.create(Messages) }  // ponytail: idempotent; swap for a real migration runner when schema evolves
+    val ds = dataSource()
+    val flyway = Flyway.configure().dataSource(ds).locations("filesystem:db/migration").load()
+    flyway.validate()  // throws if applied migrations have wrong checksums
+    val pending = flyway.info().pending()
+    check(pending.isEmpty()) { "Database not migrated. Pending: ${pending.map { it.version }}" }
+    val db = Database.connect(ds)
     installAuth()
     install(WebSockets)
     routing {

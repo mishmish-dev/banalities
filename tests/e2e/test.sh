@@ -30,8 +30,9 @@ check() { # desc expected actual
 }
 code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 
-echo "=== 1. Postgres + Keycloak ==="
+echo "=== 1. Postgres + migrations + Keycloak ==="
 docker compose up -d --wait db >/dev/null
+docker compose --profile migrate run --rm migrate
 
 docker rm -f kc-test >/dev/null 2>&1 || true
 cp tests/e2e/test-realm.json "$IMPORT_DIR/banalities-realm.json"
