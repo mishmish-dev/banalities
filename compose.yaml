@@ -49,6 +49,8 @@ services:
       KC_PROXY_HEADERS: xforwarded     # trust X-Forwarded-* from Caddy
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-SET_IN_CONSOLE}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-SET_IN_CONSOLE}
     expose:
       - "8080"
     depends_on:
