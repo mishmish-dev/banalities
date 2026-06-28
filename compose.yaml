@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-banalities}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-banalities}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
       - ./db-migrations:/docker-entrypoint-initdb.d:ro   # creates the keycloak database on first init
     ports:
       - "5432:5432"   # local dev access; drop on the VPS if only the server talks to it
