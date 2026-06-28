@@ -62,8 +62,8 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      SERVER_DOMAIN: ${SERVER_DOMAIN:?set SERVER_DOMAIN in .env}
-      KEYCLOAK_DOMAIN: ${KEYCLOAK_DOMAIN:?set KEYCLOAK_DOMAIN in .env}
+      SERVER_DOMAIN: ${SERVER_DOMAIN:-localhost}
+      KEYCLOAK_DOMAIN: ${KEYCLOAK_DOMAIN:-localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data       # persists issued certs across restarts — without it you hit Let's Encrypt rate limits
